@@ -16,6 +16,7 @@ messagesPageButton.addEventListener("click", displayPostPage)
 loginPageButton.addEventListener("click", displayLoginPage)
 
 
+
 function clearMainContainer(){
     mainContainer.innerHTML= ""
 }
@@ -111,7 +112,7 @@ async function getPostesFromApi(){
         method : 'GET',
         headers : {
             "Content-Type": "application/json",
-            "Authorization" : `Bearer ${token}`
+
         }
     }
 
