@@ -1,7 +1,7 @@
 const BaseUrl = "https://esdexamen.tk/b1devweb/api"
 
 const mainContainer = document.querySelector("#main")
-const messagesPageButton = document.querySelector("#messagesPage")
+const messagesPageButton = document.querySelector("#BlogPage")
 const registerPageButton = document.querySelector("#registerPage")
 const loginPageButton = document.querySelector("#loginPage")
 const mymodal = document.querySelector("#myModal")
@@ -13,6 +13,7 @@ let currentuser
 
 registerPageButton.addEventListener("click", displayRegisterPage)
 messagesPageButton.addEventListener("click", displayPostPage)
+loginPageButton.addEventListener("click", displayLoginPage)
 
 
 function clearMainContainer(){
@@ -102,7 +103,7 @@ function getPostFieldTemplate(){
     return template
 }
 
-async function getMessagesFromApi(){
+async function getPostesFromApi(){
 
     let url = `${BaseUrl}/posts`
 
@@ -126,14 +127,14 @@ async function getMessagesFromApi(){
 
 async function displayPostPage(post) {
 
-    let messagesAndMessageField = ""
+    let PostsAndPostField = ""
 
-    getMessagesFromApi().then(post => {
+    getPostesFromApi().then(post => {
 
-        messagesAndMessageField += getpostsTemplate(post)
-        messagesAndMessageField += getPostFieldTemplate()
+        PostsAndPostField += getpostsTemplate(post)
+        PostsAndPostField += getPostFieldTemplate()
 
-        display(messagesAndMessageField)
+        display(PostsAndPostField)
 
 
         const messageField = document.querySelector("#messageField")
@@ -260,7 +261,7 @@ async function displayPostPage(post) {
             if (post.user.username === currentuser) {
                 template = `
           
-                <div class="card col">
+                <div class="card col mt-5">
                   <h5 class="card-header postAuthor">Author : ${post.user.username}</h5>
                   <div class="card-body bg-dark ">
                     <p class="card-text text-light postContent">${post.content}</p>
@@ -282,7 +283,7 @@ async function displayPostPage(post) {
         `
             } else {
                 template = `
-         <div class="card col">
+         <div class="card col mt-5">
                   <h5 class="card-header postAuthor">Author : ${post.user.username}</h5>
                   <div class="card-body bg-dark ">
                  
@@ -301,7 +302,7 @@ async function displayPostPage(post) {
         } else {
             if (post.user.username === currentuser) {
                 template = `
-        <div class="card col">
+        <div class="card col mt-5">
                   <h5 class="card-header postAuthor">Author : ${post.user.username}</h5>
                   <div class="card-body bg-dark ">
                   
@@ -323,7 +324,7 @@ async function displayPostPage(post) {
             } else {
 
                 template = `
-         <div class="card col">
+         <div class="card col mt-5">
                   <h5 class="card-header postAuthor">Author : ${post.user.username}</h5>
                   <div class="card-body bg-dark ">
                    
