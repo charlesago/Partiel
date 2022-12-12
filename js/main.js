@@ -27,49 +27,7 @@ function display(content){
     mainContainer.innerHTML=content
 }
 
-function getPostTemplate(post){
 
-    let template
-    if(post.user.username == currentuser){
-        template = `  
-                  
-                 <div class="row justify-content-start mb-5">
-                
-                <div class="card col">
-                  <h5 class="card-header">Author : ${post.user.username}</h5>
-                  <div class="card-body bg-dark">
-                    <p class="card-text text-light">${post.content}</p>
-                    <p class="card-text text-light"> Commentaires : ${post.user.username} </p>
-                    <a href="#" id="${post.id}" class=" editMsg btn btn-primary">Edit</a>
-                    <button type="button" id="${post.id}" class=" delbutton  btn btn-secondary"><i class="bi bi-trash"></i>
-                    
-                  </div>
-                </div>
-                </div> `
-    }
-else{
-        template =   `  <div class="row justify-content-start mb-5">
-
-            <div class="card col">
-                <h5 class="card-header">Author : ${post.user.username}</h5>
-                <div class="card-body bg-dark">
-                    <p class="card-text text-light">${post.content}</p>
-                    
-                    <p class="card-text text-light"> Commentaires : ${post.user.username} </p>
-                    <a href="#" id="${post.id}" class="btn btn-primary">Commentaire</a>
-                </div>
-            </div>
-        </div>`
-
-    }
-
-
-    return template
-
-
-
-
-}
 
 function getpostsTemplate(posts) {
 
@@ -136,7 +94,6 @@ function getPostFieldTemplate(){
     let template = `
                 
                 <div class=" messageForm container contain-register mb-5 ">
-                <button onClick="location.href=location.href" class="btn btn-secondary reloadBtn"> <i class="bi bi-arrow-clockwise"></i></button>
                 <input type="text"  class="form-control " name="" id="messageField" placeholder="input message">
                 <a class="btn btn-primary sendForm" id="sendMessage"><i class="bi bi-arrow-return-left"></i></a>
         </div>`
@@ -167,96 +124,235 @@ async function getMessagesFromApi(){
         })
     }
 
-async function displayPostPage(){
-    //consiste a afficher les messages + le champ d'entrée d'un nouveau message
+async function displayPostPage(post) {
 
-        let messagesAndMessageField = ""
+    let messagesAndMessageField = ""
 
-        getMessagesFromApi().then(posts=>{
+    getMessagesFromApi().then(post => {
 
-            messagesAndMessageField+=getpostsTemplate(posts)
-            messagesAndMessageField+=getPostFieldTemplate()
+        messagesAndMessageField += getpostsTemplate(post)
+        messagesAndMessageField += getPostFieldTemplate()
 
-            display(messagesAndMessageField)
-
-
-            const messageField = document.querySelector("#messageField")
-
-            const sendButton = document.querySelector("#sendMessage")
-            sendButton.addEventListener("click", sendMessage)
+        display(messagesAndMessageField)
 
 
-            const delbutton = document.querySelectorAll(".delbutton")
-            delbutton.forEach( btn=>{
+        const messageField = document.querySelector("#messageField")
 
-                btn.addEventListener("click" ,()=> {
-                    let currentmessageid = btn.id
-                    let url = `${BaseUrl}/posts/${currentmessageid}`
+        const sendButton = document.querySelector("#sendMessage")
+        sendButton.addEventListener("click", sendMessage)
 
-                    let fetchParams = {
-                        method : "DELETE",
-                        headers:{"Content-Type":"application/json",
-                            "Authorization": `Bearer ${token}`
-                        },
 
+        const delbutton = document.querySelectorAll(".delbutton")
+        delbutton.forEach(btn => {
+
+            btn.addEventListener("click", () => {
+                let currentmessageid = btn.id
+                let url = `${BaseUrl}/posts/${currentmessageid}`
+
+                let fetchParams = {
+                    method: "DELETE",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+
+                }
+
+
+                fetch(url, fetchParams)
+
+                displayPostPage()
+
+            })
+        })
+
+        const editBtns = document.querySelectorAll('.editMsg')
+        editBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                displayEditOrReplyArea("edit")
+                window.scrollBy(0, 2000);
+                let currentMsg = btn.id
+                editMsg(currentMsg)
+
+            })
+        })
+
+        document.querySelectorAll('.commentPost').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.commentIt').forEach(div => {
+                    if (div.id === btn.id) {
+                        div.classList.toggle("off")
                     }
-
-
-                    fetch(url, fetchParams)
-
-                    displayPostPage()
-
                 })
             })
+        })
 
-            const editBtns = document.querySelectorAll('.editMsg')
-            editBtns.forEach(btn=>{
-                btn.addEventListener('click',()=>{
-                    displayEditOrReplyArea("edit")
-                    window.scrollBy(0,2000);
-                    let currentMsg = btn.id
-                    editMsg(currentMsg)
-
-                })
+        document.querySelectorAll('.sendComment').forEach(btn => {
+            btn.addEventListener('click', () => {
+                addComm(btn.id)
+            })
+        })
+        document.querySelectorAll('.deleteComm').forEach(btn => {
+            btn.addEventListener('click', () => {
+                deletComm(btn.id)
             })
 
         })
 
 
+    })
 
+    function deletComm(id) {
+        let url = `${baseUrl}/comments/${id}`
+        let fetchParams = {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
 
+            },
+        }
+        fetch(url, fetchParams)
+
+            .then(displayPostPage)
+    }
 }
 
-function getEditorTemplate(type){
-    let template
-    if (type === "edit") {
-        template =`
+    function getEditorTemplate(type) {
+        let template
+        if (type === "edit") {
+            template = `
             <div class="editor messageForm container contain-register mb-5 ms-5">
                 <input type="text" name="textEdit" class="form-control form-edit " id="textEdit" placeholder="Edit">
                 <button id="editMsgButton" class="btnSend btn btn-primary ms-3">Send</button>
             </div>
         `
+        }
+        return template
     }
-    return template
-}
 
-function displayEditOrReplyArea(type){
-    editMe.innerHTML = ""
-    let template = getEditorTemplate(type)
-    editMe.innerHTML = template
+    function displayEditOrReplyArea(type) {
+        editMe.innerHTML = ""
+        let template = getEditorTemplate(type)
+        editMe.innerHTML = template
 
-}
+    }
 
-function editMsg(post){
-    let currentEditBtn = document.querySelector('#editMsgButton')
-    currentEditBtn.addEventListener('click', ()=>{
-        let url = `${BaseUrl}/posts/${post}`
+    function getCommTemplate(com) {
+        let template = `  
+        <div class="userInfo">
+            <p class="username text-light">Username : ${com.user.username}</p>
+            <p class="userId text-light">comment : ${com.content}</p>
+        </div>
+    `
+        return template
+    }
+
+    function getPostTemplate(post) {
+        let template
+
+        if (post.comments.length > 0) {
+            let comTemplate
+            post.comments.forEach(comm => {
+                console.log(comm)
+                comTemplate += getCommTemplate(comm)
+            })
+            if (post.user.username === currentuser) {
+                template = `
+          
+                <div class="card col">
+                  <h5 class="card-header postAuthor">Author : ${post.user.username}</h5>
+                  <div class="card-body bg-dark ">
+                    <p class="card-text text-light postContent">${post.content}</p>
+                  
+                    <h2 class="commentPost text-light m-5" id="${post.id}">Comment:</h2>
+                     ${comTemplate}
+                    
+                    <div class="commentIt off " id="${post.id}">
+                    <input class="sendCommentInput" type="text " id="sendCommentInput${post.id}">
+                    <button class="sendComment text-light btn btn-primary " id="${post.id}"> send </button>
+                    </div>
+                    <a href="#" id="${post.id}" class=" editMsg text-light btn btn-primary">Edit</a>
+                    <button type="button" id="${post.id}" class=" delbutton text-light btn btn-secondary"><i class="bi bi-trash"></i>
+                    
+                  </div>
+                </div>
+                </div> 
+         
+        `
+            } else {
+                template = `
+         <div class="card col">
+                  <h5 class="card-header postAuthor">Author : ${post.user.username}</h5>
+                  <div class="card-body bg-dark ">
+                 
+                    <p class="card-text text-light postContent">${post.content}</p>
+                     <h2 class="commentPost text-light m-5" id="${post.id}">Comment:</h2>
+                    ${comTemplate}
+                 
+                    <div class="commentIt off " id="${post.id}">
+                    <input class="sendCommentInput " type="text" id="sendCommentInput${post.id}">
+                    <button class="sendComment text-light btn btn-primary " id="${post.id}"> send </button>
+                
+                </div>
+                </div> 
+        `
+            }
+        } else {
+            if (post.user.username === currentuser) {
+                template = `
+        <div class="card col">
+                  <h5 class="card-header postAuthor">Author : ${post.user.username}</h5>
+                  <div class="card-body bg-dark ">
+                  
+                    <p class="card-text text-light postContent ">${post.content}</p>
+                   <h2 class="commentPost text-light m-5" id="${post.id}">Comment:</h2>
+                 
+               
+                    <div class="commentIt off " id="${post.id}">
+                    <input class="sendCommentInput " type="text" id="sendCommentInput${post.id}">
+                    <button class="sendComment text-light btn btn-primary " id="${post.id}"> send </button>
+                    </div>
+                    <a href="#" id="${post.id}" class=" editMsg btn btn-primary text-light">Edit</a>
+                    <button type="button" id="${post.id}" class=" delbutton  btn btn-secondary text-light"><i class="bi bi-trash"></i>
+                    
+                  </div>
+                </div>
+                </div>
+        `
+            } else {
+
+                template = `
+         <div class="card col">
+                  <h5 class="card-header postAuthor">Author : ${post.user.username}</h5>
+                  <div class="card-body bg-dark ">
+                   
+                    <p class="card-text text-light postContent">${post.content}</p>
+               <h2 class="commentPost text-light m-5" id="${post.id}">Comment:</h2>
+                   
+                    <div class="commentIt off " id="${post.id}">
+                    <input class="sendCommentInput " type="text" id="sendCommentInput${post.id}">
+                    <button class="sendComment text-light btn btn-primary " id="${post.id}"> send </button>
+                
+                </div>
+                </div> 
+        `
+            }
+        }
+
+
+        return template
+    }
+
+    function addComm(id) {
+        let url = `${BaseUrl}/comment/${id}`
+        let content = document.querySelector(`#sendCommentInput${id}`)
         let body = {
-            content:document.querySelector('#textEdit').value
+            content: content.value
         }
         let bodySerialise = JSON.stringify(body)
         let fetchParams = {
-            method: "PUT",
+            method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`
@@ -265,151 +361,172 @@ function editMsg(post){
             body: bodySerialise
         }
         fetch(url, fetchParams)
-            displayPostPage()
-        editMe.innerHTML = ""
-    })
-}
-
-function displayLoginPage(){
-    display(getLoginTemplate())
-    //buttons conts & event listeners
-    const usernameLogin = document.querySelector('#usernameLogin')
-    const passwordLogin = document.querySelector('#passwordLogin')
-    const loginButton = document.querySelector('#loginButton')
-    loginButton.addEventListener("click", login)
-}
-
-function displayRegisterPage(){
-
-    display(getRegisterTemplate())
-
-    const regUsername = document.querySelector("#regUsername")
-    const regPassword = document.querySelector("#regPassword")
-    const regButton = document.querySelector("#register")
-
-    regButton.addEventListener("click", ()=>{
-        register(regUsername.value, regPassword.value)
-    })
-
-}
-
-function register(){
-    let url = `${BaseUrl}/registeruser`
-    let body = {
-        username : regUsername.value,
-        password : regPassword.value
+            .then(displayPostPage)
     }
 
 
-    let bodySerialise = JSON.stringify(body)
-
-    let fetchParams = {
-        method : "POST",
-        body: bodySerialise
-
-    }
-
-
-    fetch(url, fetchParams)
-        .then(response=>response.json())
-        .then(data=>{
-
-            if(data == "username already taken"){
-
-                mymodal.style.display = "block"
-                closeModalRegister()
-            }else{
-                displayLoginPage()
+    function editMsg(post) {
+        let currentEditBtn = document.querySelector('#editMsgButton')
+        currentEditBtn.addEventListener('click', () => {
+            let url = `${BaseUrl}/posts/${post}`
+            let body = {
+                content: document.querySelector('#textEdit').value
             }
+            let bodySerialise = JSON.stringify(body)
+            let fetchParams = {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+
+                },
+                body: bodySerialise
+            }
+            fetch(url, fetchParams)
+            displayPostPage()
+            editMe.innerHTML = ""
+        })
+    }
+
+    function displayLoginPage() {
+        display(getLoginTemplate())
+        //buttons conts & event listeners
+        const usernameLogin = document.querySelector('#usernameLogin')
+        const passwordLogin = document.querySelector('#passwordLogin')
+        const loginButton = document.querySelector('#loginButton')
+        loginButton.addEventListener("click", login)
+    }
+
+    function displayRegisterPage() {
+
+        display(getRegisterTemplate())
+
+        const regUsername = document.querySelector("#regUsername")
+        const regPassword = document.querySelector("#regPassword")
+        const regButton = document.querySelector("#register")
+
+        regButton.addEventListener("click", () => {
+            register(regUsername.value, regPassword.value)
         })
 
-
-
-
-}
-
-function login(){
-    let url = `${BaseUrl}/login_check`
-    let body = {
-        username : usernameLogin.value,
-        password : passwordLogin.value
     }
 
 
-    let bodySerialise = JSON.stringify(body)
 
-    let fetchParams = {
-        headers:{"Content-Type":"application/json"},
-        method : "POST",
-        body: bodySerialise
+    function register() {
+        let url = `${BaseUrl}/registeruser`
+        let body = {
+            username: regUsername.value,
+            password: regPassword.value
+        }
+
+
+        let bodySerialise = JSON.stringify(body)
+
+        let fetchParams = {
+            method: "POST",
+            body: bodySerialise
+
+        }
+
+
+        fetch(url, fetchParams)
+            .then(response => response.json())
+            .then(data => {
+
+                if (data == "username already taken") {
+
+                    mymodal.style.display = "block"
+                    closeModalRegister()
+                } else {
+                    displayLoginPage()
+                }
+            })
+
 
     }
 
+    function login() {
+        let url = `${BaseUrl}/login_check`
+        let body = {
+            username: usernameLogin.value,
+            password: passwordLogin.value
+        }
 
-    fetch(url, fetchParams)
-        .then(response=>response.json())
 
-        .then(data=> {
+        let bodySerialise = JSON.stringify(body)
+
+        let fetchParams = {
+            headers: {"Content-Type": "application/json"},
+            method: "POST",
+            body: bodySerialise
+
+        }
 
 
-            if(data.token){
-                token = data.token
-                currentuser = usernameLogin.value
-                document.querySelector(".btnRegisterSignup").innerHTML = `
+        fetch(url, fetchParams)
+            .then(response => response.json())
+
+            .then(data => {
+
+
+                if (data.token) {
+                    token = data.token
+                    currentuser = usernameLogin.value
+                    document.querySelector(".btnRegisterSignup").innerHTML = `
                 <p class="text-light ms-5">${usernameLogin.value}</p> 
                    <button class="btn text-light ms-4 " id="logout"> <i class="bi bi-box-arrow-in-right"></i>Log out</button>
                
                 `
-            displayPostPage()
-            }else{
-                displayLoginPage()
-                errorpassword.innerHTML="ERROR username or password"
+                    displayPostPage()
+                } else {
+                    displayLoginPage()
+                    errorpassword.innerHTML = "ERROR username or password"
 
-            }
+                }
 
-        })
-        .then(()=>{
-            document.querySelector("#logout").addEventListener("click",()=>{
-                token = null
-                displayLoginPage()
-                document.querySelector(".btnRegisterSignup").innerHTML =
-                    `
+            })
+            .then(() => {
+                document.querySelector("#logout").addEventListener("click", () => {
+                    token = null
+                    displayLoginPage()
+                    document.querySelector(".btnRegisterSignup").innerHTML =
+                        `
                     <button class="btn text-light ms-4" id="registerPage"> <i class="bi bi-person-circle"></i>
                     Register</button>
                 <button class="btn text-light ms-4 " id="loginPage"> <i class="bi bi-box-arrow-in-right"></i>
                     Log in</button>
                     
                     `
+                })
             })
-        })
 
-
-
-
-}
-
-function sendMessage(){
-    let url = `${BaseUrl}/post`
-    let body = {
-        content : messageField.value
-    }
-
-
-    let bodySerialise = JSON.stringify(body)
-
-    let fetchParams = {
-        method : "POST",
-        headers:{"Content-Type":"application/json",
-            "Authorization": `Bearer ${token}`
-        },
-        body: bodySerialise
 
     }
 
 
-    fetch(url, fetchParams)
+    function sendMessage() {
+        let url = `${BaseUrl}/post`
+        let body = {
+            content: messageField.value
+        }
 
-    displayPostPage()
-}
+
+        let bodySerialise = JSON.stringify(body)
+
+        let fetchParams = {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: bodySerialise
+
+        }
+        fetch(url,fetchParams)
+
+        displayPostPage()
+    }
+
 
 displayLoginPage()
